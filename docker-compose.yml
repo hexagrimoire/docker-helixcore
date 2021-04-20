@@ -14,7 +14,9 @@ services:
   helixcore:
     volumes:
       - 'servers:/opt/perforce/servers'
-    build: ./p4d
+    build:
+      context: ./p4d
+      dockerfile: Dockerfile
     cap_add:
       - SYS_ADMIN
     security_opt:
