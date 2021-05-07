@@ -1,7 +1,6 @@
-FROM centos:8
+FROM centos:7
 LABEL maintainer "ueno.s <ueno.s@gamestudio.co.jp>"
 
-# Add external files
 COPY files/run.sh /usr/local/bin/run.sh
 COPY files/p4.auth /etc/logrotate.d/p4.auth
 COPY files/p4.commands /etc/logrotate.d/p4.commands
@@ -27,12 +26,10 @@ ENV P4NAME=$P4NAME \
     P4ROOT=$P4HOME/$P4NAME \
     CASE_INSENSITIVE=$P4CASE
 
-RUN dnf -y install centos-release-stream yum-utils glibc-locale-source cronie sudo glibc-langpack-ja glibc glibc-common tzdata logrotate openssl git \
-    && dnf -y swap centos-{linux,stream}-repos \
-    && dnf -y distro-sync \
-    && rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial \
-    && dnf -y upgrade \
-    && cd /lib/systemd/system/sysinit.target.wants/ && \
+# See: https://hub.docker.com/_/centos/
+RUN yum update -y && \
+    yum install -y dnf && \
+    cd /lib/systemd/system/sysinit.target.wants/ && \
     for i in *; do \
         [ $i == systemd-tmpfiles-setup.service ] || rm -vf $i ; \
     done ; \
@@ -45,18 +42,14 @@ RUN dnf -y install centos-release-stream yum-utils glibc-locale-source cronie su
     rm -vf /lib/systemd/system/anaconda.target.wants/* && \
     mkdir -p /etc/selinux/targeted/contexts/ && \
     echo '<busconfig><selinux></selinux></busconfig>' > /etc/selinux/targeted/contexts/dbus_contexts \
+    && dnf update -y \
     && dnf clean all --enablerepo='*' \
     && dnf clean metadata --enablerepo='*' \
     && dnf clean all --enablerepo='*' \
     && rm -rf /var/cache/yum \
-    && localedef -f UTF-8 -i ja_JP ja_JP.UTF-8 \
-    && localedef -i /usr/share/i18n/locales/ja_JP -f UTF-8 /usr/lib/locale/ja_JP.UTF-8 \
-    && sed -i -e '/override_install_langs/s/$/,ja_JP.utf8/g' /etc/locale.conf \
-    && source /etc/locale.conf \
     && rpm --import https://package.perforce.com/perforce.pubkey \
     && yum-config-manager --add-repo https://gist.githubusercontent.com/hexagrimoire/f235f327baacdf6f109903eec5d9a717/raw/f54bb09d6a73d390762feaf0ef3344d128677dc9/perforce.centos.repo \
-    && dnf install -y helix-p4d \
-    && ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
+    && dnf install -y tzdata helix-p4d logrotate cronie openssl git \
     && chmod +x /usr/local/bin/run.sh \
     && chmod +x /usr/local/bin/get-keyvault-certificate.sh \
     && chmod 644 /etc/logrotate.d/p4.auth \
@@ -65,11 +58,14 @@ RUN dnf -y install centos-release-stream yum-utils glibc-locale-source cronie su
     && chmod 644 /etc/logrotate.d/p4.events \
     && chmod 644 /etc/logrotate.d/p4.integrity \
     && chmod 644 /etc/logrotate.d/p4.log \
+    && ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
+    && localedef -i /usr/share/i18n/locales/ja_JP -f UTF-8 /usr/lib/locale/ja_JP.UTF-8 \
+    && localedef --add-to-archive /usr/lib/locale/ja_JP.UTF-8 \
+    && source /etc/locale.conf \
     && systemctl enable crond \
     && git clone https://github.com/perforce/helix-authentication-extension.git /opt/helix-authentication-extension \
-    && run.sh \
     && pushd /opt/helix-authentication-extension \
-    && rm -Rf .git \
+    && run.sh \
     && p4 extension --package loginhook \
     && p4 extension --install loginhook.p4-extension -y \
     && p4 trust -y -f \
@@ -78,14 +74,8 @@ RUN dnf -y install centos-release-stream yum-utils glibc-locale-source cronie su
     && p4 configure set dm.user.noautocreate=2 \
     && popd
 
-EXPOSE 1666
-
-VOLUME [ "/opt/perforce/servers" ]
-
 ENV LANG="ja_JP.UTF-8" \
     LC_ALL="ja_JP.UTF-8" \
     LANGUAGE="ja_JP:ja"
 
-ENTRYPOINT ["run.sh"]
 
-CMD [ "/sbin/init" ]
