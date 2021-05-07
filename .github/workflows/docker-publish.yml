@@ -4,7 +4,7 @@ on:
   push:
     # Publish `v1.2.3` tags as releases.
     tags:
-      - v*
+      - centos80*
 
   # Run tests for any PRs.
   pull_request:
@@ -12,8 +12,6 @@ on:
 env:
   # TODO: Change variable to your image's name.
   IMAGE_NAME: helix-p4d
-  OS_NAME: centos80
-  LATEST_TAG_NAME: latest
 
 jobs:
   # Run tests.
@@ -62,13 +60,13 @@ jobs:
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
 
           # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION)
 
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
-          docker tag $IMAGE_NAME $IMAGE_ID:$OS_NAME.$VERSION
-          docker push $IMAGE_ID:$OS_NAME.$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
 
-          docker tag $IMAGE_NAME $IMAGE_ID:$LATEST_TAG_NAME
-          docker push $IMAGE_ID:$LATEST_TAG_NAME
+          docker tag $IMAGE_NAME $IMAGE_ID:latest
+          docker push $IMAGE_ID:latest
