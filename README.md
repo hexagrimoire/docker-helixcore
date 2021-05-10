@@ -1,2 +1,1 @@
-# helixcore
-HelixCore ( Perforce ) 
+# hasegawa-helixcore
