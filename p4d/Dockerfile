@@ -71,7 +71,6 @@ RUN dnf -y install centos-release-stream yum-utils glibc-locale-source cronie su
     && pushd /opt/helix-authentication-extension \
     && rm -Rf .git \
     && p4 extension --package loginhook \
-    && p4 extension --install loginhook.p4-extension -y \
     && p4 trust -y -f \
     && cp ~/.p4* /opt/perforce/ \
     && chown perforce:perforce /opt/perforce/.p4* \
