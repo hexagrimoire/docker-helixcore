@@ -67,7 +67,6 @@ RUN yum update -y && \
     && pushd /opt/helix-authentication-extension \
     && run.sh \
     && p4 extension --package loginhook \
-    && p4 extension --install loginhook.p4-extension -y \
     && p4 trust -y -f \
     && cp ~/.p4* /opt/perforce/ \
     && chown perforce:perforce /opt/perforce/.p4* \
